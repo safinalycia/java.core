@@ -1,6 +1,7 @@
-package DZ7.Enums;
+package DZ8.Enums;
 
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -15,7 +16,7 @@ public class Controller {
         variantResult.put(3, Functionality.GET_CUSTOM_WEATHER);
     }
 
-    public void onUserInput(String input) throws IOException {
+    public void onUserInput(String input) throws IOException, SQLException {
         int command = Integer.parseInt(input);
         if (!variantResult.containsKey(command)) {
             throw new IOException("There is no command for command-key " + command);
@@ -36,15 +37,20 @@ public class Controller {
     private void getCurrentWeathet() {
     }
 
-    public void getCurrentWeather() throws IOException {
+    public void getCurrentWeather() throws IOException, SQLException {
             weatherProvider.getWeather(Periods.NOW);
         }
 
-        public void getWeatherInNext5Days() throws IOException {
+        public void getWeatherInNext5Days() throws IOException, SQLException {
             weatherProvider.getWeather(Periods.FIVE_DAYS);
         }
 
-        public void getCustomWeather() throws IOException {
+        public void getCustomWeather() throws IOException, SQLException {
             weatherProvider.getWeather(Periods.CUSTOM);
         }
+
+    public void readWeatherOneDayFromDB() throws IOException, SQLException {
+        String selectedCity = ApplicationGlobalState.getInstance().getSelectedCity();
+        weatherProvider.readWeatherDayFromDB(selectedCity);
+    }
 }

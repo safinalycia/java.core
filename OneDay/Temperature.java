@@ -1,4 +1,4 @@
-package DZ7.OneDay;
+package DZ8.OneDay;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;

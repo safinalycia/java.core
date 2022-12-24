@@ -1,13 +1,14 @@
-package DZ7.Enums;
+package DZ8.Enums;
 
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.Scanner;
 
 public class UserInterface {
 
     private final Controller controller = new Controller();
 
-    public void runApplication() {
+    public void runApplication() throws SQLException{
 
         Scanner scanner = new Scanner(System.in);
         while (true) {
@@ -60,7 +61,7 @@ public class UserInterface {
         }
     }
 
-    private void notifyController(String input) throws IOException {
+    private void notifyController(String input) throws IOException, SQLException {
         controller.onUserInput(input);
     }
 }

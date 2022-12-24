@@ -1,18 +1,21 @@
-package DZ7.Enums;
+package DZ8.Enums;
 
-import DZ7.FiveDay.WeatherResponseFiveDay;
-import DZ7.OneDay.WeatherResponse;
+
+import DZ8.Entity.WeatherData;
+import DZ8.FiveDay.WeatherResponseFiveDay;
+import DZ8.OneDay.WeatherResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
 import java.io.IOException;
+import java.sql.*;
+import java.util.ArrayList;
 import java.util.Arrays;
 
-public class AccuWeatherProvider {
+public class AccuWeatherProvider implements WeatherProvider {
     private static final String BASE_HOST = "dataservice.accuweather.com";
     private static final String FORECAST_ENDPOINT = "forecasts";
     private static final String CURRENT_CONDITIONS_ENDPOINT = "currentconditions";
@@ -21,11 +24,33 @@ public class AccuWeatherProvider {
     private static final String DAILY = "daily";
     private static final String FIVE_DAY = "5day";
 
+    WeatherResponseFiveDay weatherResponse5Day = new WeatherResponseFiveDay();
+
+    WeatherResponse[] weatherResponse;
+
+    WeatherData weatherData = new WeatherData(34, "Kazan", "21/12/2022", "ghtg", -4.0f);
+
+    String insertWeatherQuery = "INSERT INTO weather (city, date_time, weather_text, temperature) VALUES (?,?,?,?)";
+
+
+    static {
+        try {
+            Class.forName("org.sqlite.JDBC");
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public Connection getConnection() throws SQLException {
+        Connection connection = DriverManager.getConnection("jdbc:sqlite:weather.db");
+        return connection;
+    }
+
     private final OkHttpClient client = new OkHttpClient();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     //@Override
-    public void getWeather(Periods periods) throws IOException {
+    public void getWeather(Periods periods) throws IOException, SQLException {
         String cityKey = detectCityKey();
         if (periods.equals(Periods.NOW)) {
             HttpUrl url = new HttpUrl.Builder()
@@ -47,6 +72,17 @@ public class AccuWeatherProvider {
             ObjectMapper objectMapper = new ObjectMapper();
             WeatherResponse[] weatherResponse = objectMapper.readValue(jsonString, WeatherResponse[].class);
             System.out.println(Arrays.toString(weatherResponse));
+
+            try (Connection connection = getConnection();
+                 PreparedStatement saveWeather = connection.prepareStatement(insertWeatherQuery)) {
+                saveWeather.setString(1, ApplicationGlobalState.getInstance().getSelectedCity());
+                saveWeather.setString(2, weatherResponse[0].getLocalObservationDateTime());
+                saveWeather.setString(3, weatherResponse[0].getWeatherText());
+                saveWeather.setDouble(4, weatherResponse[0].temperature.metric.getValue());
+                saveWeather.execute();
+            } catch (SQLException throwables) {
+                throwables.printStackTrace();
+            }
 
         } else if (periods.equals(Periods.FIVE_DAYS)) {
             String selectedCity = ApplicationGlobalState.getInstance().getSelectedCity();
@@ -71,6 +107,39 @@ public class AccuWeatherProvider {
             ObjectMapper objectMapper = new ObjectMapper();
             WeatherResponseFiveDay weatherResponse5Day = objectMapper.readValue(jsonString, WeatherResponseFiveDay.class);
             System.out.println("В городе " + selectedCity + (weatherResponse5Day));
+
+            try (Connection connection = getConnection();
+                 PreparedStatement saveWeather = connection.prepareStatement(insertWeatherQuery)) {
+                for (int i = 0; i < 5; i++) {
+                    saveWeather.setString(1, ApplicationGlobalState.getInstance().getSelectedCity());
+                    saveWeather.setString(2, String.valueOf(weatherResponse5Day.dailyForCasts.get(0 +i).date));
+                    saveWeather.setString(3, String.valueOf(weatherResponse5Day.dailyForCasts.get(0+ i).day.iconPhrase));
+                    saveWeather.setString(4, String.valueOf(weatherResponse5Day.dailyForCasts.get(0+ i).temperature.minimum.getValue()));
+                    saveWeather.execute();
+                }
+            } catch (SQLException throwables) {
+                throwables.printStackTrace();
+            }
+        }
+    }
+
+    public void readWeatherDayFromDB(String selectedCity) throws SQLException {
+        selectedCity = ApplicationGlobalState.getInstance().getSelectedCity();
+        try (Connection connection = DriverManager.getConnection("jdbc:sqlite:weather.db");
+             Statement statement = connection.createStatement()) {
+            ResultSet resultSet = statement.executeQuery("SELECT * FROM weather WHERE city = '" + selectedCity + "'");
+            ArrayList<WeatherResponse> arrayList = new ArrayList<>();
+            while (resultSet.next()) {
+                System.out.println(
+                        resultSet.getInt(1) + " - " +
+                                resultSet.getString(2) + " - " +
+                                resultSet.getString(3) + " - " +
+                                resultSet.getString(4) + " - " +
+                                resultSet.getDouble(5) + " - "
+                );
+                arrayList.add(new WeatherResponse(resultSet.getString(1), resultSet.getString(2), resultSet.getString(3), resultSet.getDouble(4)));
+            }
+            System.out.println(Arrays.toString(weatherResponse));
         }
     }
 
@@ -107,6 +176,7 @@ public class AccuWeatherProvider {
             String countryName = objectMapper.readTree(jsonResponse).get(0).at("/Country/LocalizedName").asText();
             System.out.println("Найден город " + cityName + " в стране " + countryName);
         } else throw new IOException("Server returns 0 cities");
+        String s = objectMapper.readTree(jsonResponse).get(0).at("/Key").asText();
 
         return objectMapper.readTree(jsonResponse).get(0).at("/Key").asText();
     }

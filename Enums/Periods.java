@@ -1,4 +1,4 @@
-package DZ7.Enums;
+package DZ8.Enums;
 
 public enum Periods {
 

@@ -1,4 +1,4 @@
-package DZ7.OneDay;
+package DZ8.OneDay;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -39,8 +39,8 @@ public class WeatherResponse {
     public WeatherResponse() {
     }
 
-    public Date getLocalObservationDateTime() {
-        return localObservationDateTime;
+    public String getLocalObservationDateTime() {
+        return String.valueOf(localObservationDateTime);
     }
 
     public void setLocalObservationDateTime(Date localObservationDateTime) {
@@ -117,5 +117,10 @@ public class WeatherResponse {
 
     public void setLink(String link) {
         this.link = link;
+    }
+
+    @Override
+    public String toString() {
+        return "Погода на сегодня: " + weatherText + " и " + getTemperature().getMetric();
     }
 }

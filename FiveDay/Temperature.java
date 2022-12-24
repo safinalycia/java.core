@@ -1,4 +1,4 @@
-package DZ7.FiveDay;
+package DZ8.FiveDay;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -26,6 +26,6 @@ public class Temperature {
 
     @Override
     public String toString() {
-        return "" + maximum + "" + getMaximum();
+        return "" + maximum + "" + getMaximum().getUnit();
     }
 }

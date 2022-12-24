@@ -1,11 +1,13 @@
-package DZ7.Enums;
+package DZ8.Enums;
 
 public class ApplicationGlobalState {
     private static ApplicationGlobalState INSTANCE;
 
     private String selectedCity = null;
 
-    private final String API_KEY = "O7CVCuTRr1m7jB8KlBiTa55AZPjjAfLx";
+    private final String API_KEY = "fznZAIqxXoFXThyJQVb59Qh09qlBdVHs";
+
+    private final String DB_FILENAME = "weather.db";
 
     private ApplicationGlobalState() {
     }
@@ -28,4 +30,11 @@ public class ApplicationGlobalState {
     public String getApiKey() {
         return this.API_KEY;
     }
+
+    public String getDbFileName() {
+        return null;
+    }
+
+    //public String getDbFileName() {
+    //}
 }
